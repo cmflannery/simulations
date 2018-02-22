@@ -2,108 +2,113 @@
 Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis """
 import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+import units
+import atmos
 
 
-class rocket():
-    def __init__(self):
+class RocSim(object):
+    def __init__(self, state, timestep, duration, Isp, pexit):
+        """ RocSim must be initialized with a state variable.
+        
+        state = [
+            time,
+            velocity,
+            path_angle,
+            heading_angle,
+            latitude,
+            longitude,
+            altitude,
+            pa,
+            mass,
+            heat,
+            thrust,
+            thrust_angle,
+            lift_coefficient,
+            drag_coefficient,
+            bank_angle
+            ]
+
+        The state variable always represents the latest state.
+
+        engine = [
+            Isp,
+            pexit,
+            Ae,
+            thrust_sl
+        ]
+        """
+        self.state0 = [[i] for i in state]
+        keys = ['time','velocity','path_angle','heading_angle','latitude','longitude',\
+                'altitude','mass','heat','thrust_angle','lift_coefficient','drag_coefficient',\
+                'bank_angle']
+        self.stateDict = dict(zip(keys,self.state0))
+        self.start = self.state0[0][0]
+        self.timestep = timestep  # timestep is the size of the time between states in seconds
+        self.duration = duration  # duration is the total time in seconds of the run
+        self.pexit = pexit
         self.constants()
 
+    def run_simulation(self):
+        for i in range(self.start, self.start+self.duration):
+            self.update_state()
+        plt.plot(self.stateDict['velocity'])
+        plt.show()
+
     def constants(self):
-        self.g0 = 9.81
-        return 0
+        self.g0 = 9.81  # [m/s^2]
+        self.Re = 6378000  # [m]
+
+    def update_state(self):
+        self.stateDict['velocity'].append(self.update_velocity)
+        self.stateDict['pa'].append(self.update_pa)
+
+    def update_pa(self,i):
+        """ return an updated value for pressure """
+        altitude = self.stateDict['altitude'][i]
+        return atmos.SimpleAtmos(altitude,'m')
+
+    def update_thrust(self,i):
+        Aexit = self.engine['Aexit']
+        pexit = self.engine['pexit']
+        pa = self.stateDict['pa'][i]
+        return self.engine['thrust_sl'] + (pexit-pa)*Aexit
     
-    @property
-    def mp(self):
-        return self.__mp
+    def update_velocity(self):
+        thrust = self.stateDict['thrust']
+        thrust_angle = self.stateDict['thrust_angle']
+        mass = self.stateDict['mass']
+        radius = self.stateDict['radius']
+        flight_path_angle = self.stateDict['flight_path_angle']  # degrees
+        drag = 0
+        return (thrust*np.cos(thrust_angle)-drag)/mass - self.g0*(Re/R)**2*sin(flight_path_angle)
 
-    @mp.setter
-    def mp(self, value):
-        self.__mp = value
-
-    @property
-    def mf(self):
-        return self.__mf
-
-    @mf.setter
-    def mf(self, value):
-        self.__mf = value
-
-    @property
-    def mpay(self):
-        return self.__mpay
-
-    @mpay.setter
-    def mpay(self, value):
-        self.__mpay = value
-    
-    @property
-    def mlaunch(self):
-        """ total launch mass """
-        return self.mp + self.mf + self.mpay
-
-    @property
-    def MR(self):
-        return self.mlaunch/self.mf
-
-    @property
-    def tburn(self):
-        return self.__tburn
-
-    @tburn.setter
-    def tburn(self, value):
-        self.__tburn = value
-
-    @property
-    def thrust(self):
-        return self.__thrust
-
-    @thrust.setter
-    def thrust(self, value):
-        self.__thrust = value
-    
-    @property
-    def launch_weight(self):
-        return self.mlaunch*self.g0
-
-    @property
-    def launch_angle(self):
-        return self.__launch_angle
-
-    @launch_angle.setter
-    def launch_angle(self, value):
-        self.__launch_angle = value
-
-    @property
-    def a0y(self):
-        return self.g0*(np.sin(np.deg2rad(self.launch_angle))*self.thrust/self.launch_weight-1)
-
-    @property
-    def a0x(self):
-        return self.g0*np.cos(np.deg2rad(self.launch_angle))*self.thrust/self.launch_weight
-
-    @property
-    def a0(self):
-        return (self.a0x**2 + self. a0y**2)**0.5
-
-    @property
-    def upy(self):
-        """ vertical velocity at end of powered flight """
-        return 1
+    def update_mass(self):
+        thrust = self.state['thrust']
+        g0 = self.g0
+        Isp = self.Isp
 
 
 def test():
-    thing = rocket()
-    thing.mp = 300  # propellant mass
-    thing.mf = 100  # dry vehicle mass
-    thing.mpay = 50  # payload mass
-    thing.tburn = 100  # burn time
-    thing.thrust = 5000  # thrust
-    thing.launch_angle = 80
-
-    print('weight =', thing.launch_weight)
-    print('a0 = ', thing.a0)
-    print('a0y = ', thing.a0y)
-    print('a0x = ', thing.a0x)
+    state = [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+        0,
+        1000,
+        0,
+        0,
+        0,
+        0
+    ]
+    itsatest = RocSim(state,0.01,10)
+    itsatest.run_simulation()
 
 
 if __name__ == '__main__':
