@@ -11,7 +11,7 @@ import atmos
 class RocSim(object):
     def __init__(self, state, timestep, duration, Isp, pexit):
         """ RocSim must be initialized with a state variable.
-        
+    
         state = [
             time,
             velocity,
