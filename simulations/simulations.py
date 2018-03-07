@@ -2,10 +2,6 @@
 Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
-import units
-import atmos
 
 
 class Rocket(object):
@@ -349,46 +345,40 @@ class Rocket(object):
 
 
 def test_Rocket():
-    duration = 10000  # [s]
-    timestep = 0.1  # [s]
-
-    gas_constant = 287  # [J/kg/K] gas constant for air
-    gamma = 1.2
-
-    # constants
-    g0 = 9.81  # [m/s/s]
-    Re = 6378000  # [m]
-
-    averageTWRatio = 80
-
-    # engine definition
-    Isp = 300  # [s]
+    burntime = 50  # s
     nengines = 1
-    thrust_sl = nengines*50000  # [N]
-    Ae = 0.25  # [m^2]
-    pe = units.Value(101325.0,'Pa')  # [atm]
-    mdot = thrust_sl/(g0*Isp)  # [kg/s]
-    mpropulsion = thrust_sl/averageTWRatio/g0 # [1]
-    mstructure = 200  # [kg]
-    mpayload = 0  # [kg]
-    burntime = [150, 0]  # [s] three burns, launch, reentry, landing
-    totalburn = sum(burntime)
-    mprop = mdot*totalburn  # [kg]
-    m0 = mstructure + mpayload + mprop + mpropulsion
-    mf = m0 - mprop # [kg]
-    massratio = mprop/m0
-    initialThrust2Weight = thrust_sl/(m0*g0)
+    thrust_sl = 24000
+    Isp = 400
+    g0 = 9.81
+    mdot = nengines*thrust_sl/(g0*Isp)
+    twratio = 50  # estimated thrust 2 weight ratio
+    mstructure = 300  # kg
+    mpropulsion = thrust_sl/(twratio*g0)
+    mpropellant = mdot*burntime
+    mass = mpropulsion + mpropellant + mstructure
+    initialConditions = {
+        'time': 0,
+        'velocity': 0,
+        'flight_angle': 0,
+        'flight_heading': np.deg2rad(90),
+        'latitude': 0,
+        'longitude': 0,
+        'altitude': 0,
+        'mass': mass,
+        'heat': 0,
+        'lift_coefficient': 0,
+        'bank_angle': 0
+    }
+    engines = {
+        'thrust_sl': thrust_sl,
+        'thrust_angle': 0,
+        'Isp': Isp,
+        'Ae': 0.25,
+        'nengines': nengines
+    }
+    itsatest = Rocket(initialConditions,engines,burntime)
+    altitude, velocity, acceleration, mass, time, thrust = itsatest.run()
 
-    print('mass ratio =', massratio)
-    print('dry mass = ', mf)
-    print('wet mass = ', m0)
-    print('propellant mass =', mprop)
-    print('propulsion system mass =', mpropulsion)
-    print('initialThrust2Weight =', initialThrust2Weight)
-
-    atm = atmos.SimpleAtmos()
-
-    itsatest = Rocket()
     return 0
 
 
