@@ -3,6 +3,11 @@ Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
 
+__author__ = "Cameron Flannery"
+__copyright__ = "Copyright 2018"
+__license__ = "MIT"
+__version__ = "0.0.1"
+__status__ = "alpha"
 
 class Rocket(object):
     """ Rocket is a simulation class for rocket simulations.
