@@ -14,7 +14,7 @@ class Rocket(object):
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
     
-    def __init__(self, initialConditions, engines, burntime, timestep=1):
+    def __init__(self, initialConditions, engines, burntime, timestep=0.1):
         """ Initialization of the Rocket simulation class
 
         Args:
@@ -118,7 +118,8 @@ class Rocket(object):
             T, rho, sos = self.STDATM(self.altitude[self.runIter])  # Thermoproperties
 
             M = self.velocity[self.runIter]/sos
-            Cd = self.calc_Cd(M)
+            self.Cd = self.calc_Cd(M)
+            self.drag.append(self.calc_drag())
 
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
@@ -138,7 +139,7 @@ class Rocket(object):
             self.drag.append(self.drag[0])
 
             # END CONDITIONS
-            if (self.altitude[self.runIter] < 1000 and self.time[self.runIter] > self.burntime) or self.time[self.runIter] > 10000:
+            if (self.altitude[self.runIter] < 1000 and (self.time[self.runIter]-self.time[0]) > self.burntime) or self.time[self.runIter] > 10000:
                 break
 
             self.runIter += 1
@@ -147,8 +148,16 @@ class Rocket(object):
     def calc_Cd(self, M):
         return 0.15 + 0.6*M**2*np.exp(-M**2)
 
-    def calc_drag(self, vel, rho, S, Cd):
-        return 1/2*rho*vel**2*S*Cd
+    def calc_drag(self, velocity=None, rho=None, S=None, Cd=None):
+        if not velocity:
+            velocity = self.velocity
+        if not rho:
+            rho = self.rho
+        if not S:
+            S = self.S
+        if not Cd:
+            Cd = self.Cd
+        return 1/2*rho*velocity**2*S*Cd
 
     def calc_thrust(self, thrust_sl=None, Ae=None, pe=None, pa=None):
         """ calc_thrust determines the thrust """
