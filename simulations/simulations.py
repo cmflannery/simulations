@@ -1,5 +1,4 @@
-""" simulations.py
-Simulations is a python based flight simulation package
+"""Simulations is a python based flight simulation package
 for rocket and missle trajectory analysis. """
 import numpy as np
 
@@ -19,12 +18,14 @@ class Rocket(object):
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
     
-    def __init__(self, initialConditions, engines, burntime, timestep=0.1):
+    def __init__(self, time=None, velocity=None, flight_angle=None, flight_heading=None,
+                 latitude=None, longitude=None, altitude=None, mass=None, heat=None,
+                 thrust_sl=None, thrust_angle=None, lift_coefficient=None, bank_angle=None,
+                 burn_time=None, timestep=0.1):
         """ Initialization of the Rocket simulation class
 
         Args:
             initialConditions: expects dictionary containing
-            initial conditions for launch vehicle.
              -> Required keywords:
                 time,               # [s]
                 velocity,           # [m/s]
@@ -294,7 +295,8 @@ class Rocket(object):
 
         dVdt calculates the acceleration of the rocket at the current step
         """
-        dVdt = (thrust*np.cos(thrust_angle)-drag)/mass - self.g0*(self.Rearth/R)**2*np.sin(flight_heading)
+        dVdt = (thrust*np.cos(thrust_angle)-drag)/mass -
+                self.g0*(self.Rearth/R)**2*np.sin(flight_heading)
         return dVdt
 
     def CONST(self):
