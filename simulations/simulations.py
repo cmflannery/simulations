@@ -18,9 +18,9 @@ class Rocket(object):
     A list of assumptions, capabilities, and limitations
     will be added here as features are solidified. """
     
-    def __init__(self, time=None, velocity=None, flight_angle=None, flight_heading=None,
-                 latitude=None, longitude=None, altitude=None, mass=None, heat=None,
-                 thrust_sl=None, thrust_angle=None, lift_coefficient=None, bank_angle=None,
+    def __init__(self, time=0, velocity=0, flight_angle=0, flight_heading=0, S=None,
+                 latitude=0, longitude=0, altitude=0, mass=None, heat=0, Isp=None, nengines=1,
+                 thrust_sl=None, thrust_angle=None, Ae=None, lift_coefficient=None, bank_angle=None,
                  burn_time=None, timestep=0.1):
         """ Initialization of the Rocket simulation class
 
@@ -48,40 +48,35 @@ class Rocket(object):
                 Ae:                 # [m^2]
                 nengines:           # [1]
             
-            burntime: length of burn in seconds
+            burn_time: length of burn in seconds
         Keyword Args:
             timestep: (optional), timestep in seconds. Default
                 timestep is 1s
         Returns:
             0: Completed with no errors
         """
+        # TODO: Error if one of the requied args is None
+        # Initial Conditions - All initial conditions are set to 0 if no input is given. 
+        self.time = [time]
+        self.velocity = [velocity]
+        self.flight_angle = [flight_angle]
+        self.flight_heading = [flight_heading]
+        self.latitude = [latitude]
+        self.longitude = [longitude]
+        self.altitude = [altitude]
+        self.mass = [mass]
+        self.heat = [heat]
+        self.S = S  # surface area
         
-        requiredArgs = [
-            'time',
-            'velocity',
-            'flight_angle',
-            'flight_heading',
-            'latitude',
-            'longitude',
-            'altitude',
-            'mass',
-            'heat',
-            'lift_coefficient',
-            'bank_angle'
-            'thrust_sl',
-            'thrust_angle',
-            'Ae',
-            'Isp',
-        ]
-
-        for arg in requiredArgs:
-            if arg not in (initialConditions or engines):
-                pass
-
-        self.initialConditions = initialConditions
-        self.engines = engines
-        self.burntime = burntime
+        self.Isp = Isp
+        self.nengines = nengines
+        self.thrust_sl = thrust_sl
+        self.thrust_angle = [thrust_angle]
+        self.lift_coefficient = [lift_coefficient]
+        self.bank_angle = [bank_angle]
+        self.burn_time = burn_time
         self.timestep = timestep
+
         self.CONST()
 
     def run(self, stopTime=None, stopApogee=None):
@@ -90,27 +85,11 @@ class Rocket(object):
         Automatically ends simulation when the vehicle impacts
         the ground, or reaches a stable orbit.
         """
-
         # initialize arrays with values from initialConditions
-        self.time               = [self.initialConditions['time']]
-        self.velocity           = [self.initialConditions['velocity']]
-        self.flight_angle       = [self.initialConditions['flight_angle']]
-        self.flight_heading     = [self.initialConditions['flight_heading']]
-        self.latitude           = [self.initialConditions['latitude']]
-        self.longitude          = [self.initialConditions['longitude']]
-        self.altitude           = [self.initialConditions['altitude']]
-        self.mass               = [self.initialConditions['mass']]
-        self.heat               = [self.initialConditions['heat']]
-        self.lift_coefficient   = [self.initialConditions['lift_coefficient']]
-        self.bank_angle         = [self.initialConditions['bank_angle']]
         self.drag               = [self.calc_Cd(0)]
         
         # initialize arrays with values from engines
-        self.nengines           = self.engines['nengines']
-        self.thrust             = [self.engines['thrust_sl']*self.nengines]
-        self.thrust_angle       = [self.engines['thrust_angle']]
-        self.Ae                 = [self.engines['Ae']]
-        self.Isp                = self.engines['Isp']
+        self.thrust             = [self.thrust_sl*self.nengines]
         self.mdot               = self.thrust[0]/(self.g0*self.Isp)
 
         # initialize additional values
@@ -125,7 +104,7 @@ class Rocket(object):
 
             M = self.velocity[self.runIter]/sos
             self.Cd = self.calc_Cd(M)
-            self.drag.append(self.calc_drag())
+            self.drag.append(self.calc_drag(rho=rho))
 
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
@@ -133,7 +112,7 @@ class Rocket(object):
             self.acceleration.append(self.calc_accel())
 
             # Thrust
-            if self.time[self.runIter] <= self.burntime:
+            if self.time[self.runIter] <= self.burn_time:
                 self.thrust.append(self.thrust[0])
                 self.mass.append(self.mass[self.runIter] - self.mdot*self.timestep)
             else:
@@ -145,7 +124,7 @@ class Rocket(object):
             self.drag.append(self.drag[0])
 
             # END CONDITIONS
-            if (self.altitude[self.runIter] < 1000 and (self.time[self.runIter]-self.time[0]) > self.burntime) or self.time[self.runIter] > 10000:
+            if (self.altitude[self.runIter] < 1000 and (self.time[self.runIter]-self.time[0]) > self.burn_time) or self.time[self.runIter] > 10000:
                 break
 
             self.runIter += 1
@@ -156,7 +135,7 @@ class Rocket(object):
 
     def calc_drag(self, velocity=None, rho=None, S=None, Cd=None):
         if not velocity:
-            velocity = self.velocity
+            velocity = self.velocity[len(self.velocity)-1]
         if not rho:
             rho = self.rho
         if not S:
@@ -295,7 +274,7 @@ class Rocket(object):
 
         dVdt calculates the acceleration of the rocket at the current step
         """
-        dVdt = (thrust*np.cos(thrust_angle)-drag)/mass -
+        dVdt = (thrust*np.cos(thrust_angle)-drag)/mass - \
                 self.g0*(self.Rearth/R)**2*np.sin(flight_heading)
         return dVdt
 
@@ -361,20 +340,21 @@ class Rocket(object):
 
 
 def test_Rocket():
-    burntime = 50  # s
+    burn_time = 50  # s
     nengines = 1
     thrust_sl = 24000
-    Isp = 400
+    Isp = 260
     g0 = 9.81
     mdot = nengines*thrust_sl/(g0*Isp)
     twratio = 50  # estimated thrust 2 weight ratio
     mstructure = 300  # kg
     mpropulsion = thrust_sl/(twratio*g0)
-    mpropellant = mdot*burntime
+    mpropellant = mdot*burn_time
     mass = mpropulsion + mpropellant + mstructure
-    initialConditions = {
+    std_input = {
         'time': 0,
         'velocity': 0,
+        'S': 0.24,
         'flight_angle': 0,
         'flight_heading': np.deg2rad(90),
         'latitude': 0,
@@ -383,19 +363,18 @@ def test_Rocket():
         'mass': mass,
         'heat': 0,
         'lift_coefficient': 0,
-        'bank_angle': 0
-    }
-    engines = {
+        'bank_angle': 0,
         'thrust_sl': thrust_sl,
         'thrust_angle': 0,
         'Isp': Isp,
         'Ae': 0.25,
-        'nengines': nengines
+        'nengines': nengines,
+        'burn_time': 20
     }
-    itsatest = Rocket(initialConditions,engines,burntime)
+    itsatest = Rocket(**std_input)
     altitude, velocity, acceleration, mass, time, thrust = itsatest.run()
-
-    return 0
+    
+    return altitude, velocity, acceleration, mass, time, thrust
 
 
 if __name__ == '__main__':
