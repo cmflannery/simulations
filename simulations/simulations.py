@@ -20,7 +20,7 @@ class Rocket(object):
     
     def __init__(self, time=0, velocity=0, flight_angle=0, flight_heading=0, S=None,
                  latitude=0, longitude=0, altitude=0, mass=None, heat=0, Isp=None, nengines=1,
-                 thrust_sl=None, thrust_angle=None, Ae=None, lift_coefficient=None, bank_angle=None,
+                 thrust_sl=None, thrust_angle=0, Ae=None, lift_coefficient=None, bank_angle=None,
                  burn_time=None, timestep=0.1):
         """ Initialization of the Rocket simulation class
 
@@ -54,13 +54,17 @@ class Rocket(object):
                 timestep is 1s
         Returns:
             0: Completed with no errors
+
+        TODO: This has a bunch of outdated information. Fix it.
         """
         # TODO: Error if one of the requied args is None
         # Initial Conditions - All initial conditions are set to 0 if no input is given. 
+
+        ## Required Arguments
         self.time = [time]
         self.velocity = [velocity]
         self.flight_angle = [flight_angle]
-        self.flight_heading = [flight_heading]
+        self.flight_heading = [np.deg2rad(flight_heading)]
         self.latitude = [latitude]
         self.longitude = [longitude]
         self.altitude = [altitude]
@@ -68,6 +72,7 @@ class Rocket(object):
         self.heat = [heat]
         self.S = S  # surface area
         
+        ## Optional Arguments
         self.Isp = Isp
         self.nengines = nengines
         self.thrust_sl = thrust_sl
@@ -103,8 +108,8 @@ class Rocket(object):
             T, rho, sos = self.STDATM(self.altitude[self.runIter])  # Thermoproperties
 
             M = self.velocity[self.runIter]/sos
-            self.Cd = self.calc_Cd(M)
-            self.drag.append(self.calc_drag(rho=rho))
+            Cd = self.calc_Cd(M)
+            self.drag.append(self.calc_drag(rho=rho, Cd=Cd))
 
             # calculate altitude, velocity, and acceleration
             self.altitude.append(self.altitude[self.runIter] + self.calc_dalt())
@@ -121,14 +126,13 @@ class Rocket(object):
             self.flight_heading.append(self.flight_heading[0])  # initial values until calcs added
             self.flight_angle.append(self.flight_angle[0])      # initial values until calcs added
             self.thrust_angle.append(self.thrust_angle[0])
-            self.drag.append(self.drag[0])
 
             # END CONDITIONS
             if (self.altitude[self.runIter] < 1000 and (self.time[self.runIter]-self.time[0]) > self.burn_time) or self.time[self.runIter] > 10000:
                 break
 
             self.runIter += 1
-        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust)
+        return (self.altitude, self.velocity, self.acceleration, self.mass, self.time, self.thrust, self.drag)
 
     def calc_Cd(self, M):
         return 0.15 + 0.6*M**2*np.exp(-M**2)
@@ -142,7 +146,8 @@ class Rocket(object):
             S = self.S
         if not Cd:
             Cd = self.Cd
-        return 1/2*rho*velocity**2*S*Cd
+        drag = 0.5*rho*velocity**2*S*Cd
+        return drag
 
     def calc_thrust(self, thrust_sl=None, Ae=None, pe=None, pa=None):
         """ calc_thrust determines the thrust """
@@ -234,7 +239,6 @@ class Rocket(object):
             flight_heading = self.flight_heading[i]
         if not timestep:
             timestep = self.timestep
-
         dV = self.dVdt(thrust, thrust_angle, drag, mass, R, flight_heading)*timestep
         return dV
 
@@ -274,6 +278,7 @@ class Rocket(object):
 
         dVdt calculates the acceleration of the rocket at the current step
         """
+        drag = drag*np.sign(self.velocity[self.runIter])
         dVdt = (thrust*np.cos(thrust_angle)-drag)/mass - \
                 self.g0*(self.Rearth/R)**2*np.sin(flight_heading)
         return dVdt
@@ -342,7 +347,7 @@ class Rocket(object):
 def test_Rocket():
     burn_time = 50  # s
     nengines = 1
-    thrust_sl = 24000
+    thrust_sl = 24000  # N
     Isp = 260
     g0 = 9.81
     mdot = nengines*thrust_sl/(g0*Isp)
@@ -369,12 +374,12 @@ def test_Rocket():
         'Isp': Isp,
         'Ae': 0.25,
         'nengines': nengines,
-        'burn_time': 20
+        'burn_time': burn_time
     }
     itsatest = Rocket(**std_input)
-    altitude, velocity, acceleration, mass, time, thrust = itsatest.run()
+    altitude, velocity, acceleration, mass, time, thrust, drag = itsatest.run()
     
-    return altitude, velocity, acceleration, mass, time, thrust
+    return altitude, velocity, acceleration, mass, time, thrust, drag
 
 
 if __name__ == '__main__':

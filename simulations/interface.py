@@ -8,14 +8,26 @@ from simulations.simulations import Rocket
 
 standard_types = {
         'name': str,
-        # engines parameters
-        'thrust_sl': float,  # Newtons?
-        'thrust_angle': float,  # degrees
-        'Isp': float,  # seconds
-        'Ae': float, # exit area [m^2]
-        'nengines': int # number of engines
-        }
 
+        'time': float,
+        'velocity': float,
+        'flight_angle': float,
+        'flight_heading': float,
+        'latitude': float,
+        'longitude': float,
+        'altitude': float,
+        'mass': float,
+        'heat': float,
+        'S': float,
+        'Isp': float,
+        'nengines': float,
+        'thrust_sl': float,
+        'thrust_angle': float,
+        'lift_coefficient': float,
+        'bank_angle': float,
+        'burn_time': float,
+        'timestep': float
+        }
 
 def read_config(fname):
     """Parse configuration file and return a dictionary with the key value pairs
@@ -59,7 +71,7 @@ def read_config(fname):
 def main(fname):
     configuration = read_config(fname)
     rocket = Rocket(**configuration)
-    rocket.generate_output()
+    return rocket
 
 
 def entry():

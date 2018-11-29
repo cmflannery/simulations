@@ -4,65 +4,36 @@
 Getting Started
 ===============
 
-This document will show you how to start using `simulations`.
+This a quick guide on using the :code:`simulations` library for vehicle sizing.
 
-Installation
-------------
+:code:`simulations` is build around configuration files. A config file is taken in and the ouputs
+are generated. No state variables are stored beyond runtime. A config file is all you need to keep,
+send to colleagues, and version control.
 
-Installing with pip::
+Inputs
+------
 
-    $ pip3 install rocket-sims
+The following is a comprehensive list of the required and optional inputs for :code:`simulations`.
 
-Building from source::
+REQUIRED
+~~~~~~~~
+* :code:`S`: 0.24,
+* :code:`mass`: mass,
+* :code:`thrust_sl`: thrust_sl,
+* :code:`Isp`: Isp,
+* :code:`Ae`: 0.25,
+* :code:`nengines`: nengines,
+* :code:`burn_time`: burn_time
 
-    $ python install -r requirements.txt
-    $ python setup.py install
-
-Simulating a Launch
--------------------
-
-Configuration Files
-~~~~~~~~~~~~~~~~~~~
-openrocketengine takes a configuration file as the only input, specifying the engine propellant properties, pressures desired,
-and geometric design choices. Right now, there is only one possible combination of parameters that all have to be included in
-the config file. In the future, there may be additional options to automatically retrieve propellant properties from CEA.
-
-Config files are usually named with the engine name and the revision number with a '.cfg' suffix. I.e. RBF-rev01.cfg.
-
-A typical configuration file looks like the following::
-
-    # This is a test configuration file for openrocketengine
-    #
-    # The parameters listed here are all the known parameters that openrocketengine can take as inputs.
-    # Refer to the official documentation for more implementation and usage details.
-    name RBF1
-    units SI
-    thrust 5000
-    Tc 3200
-    pc 2068000
-    pe 101325
-    MR 2.1
-    MW 18.9
-    gamma 2.31
-    # Geometric parameters
-    lstar 40
-    area_ratio 5.5
-
-
-Running the program
-~~~~~~~~~~~~~~~~~~~
-openrocketengine can be fun from the command line with the command `rocket`::
-
-    $ rocket RBF-rev01.cfg
-
-Outputs
-~~~~~~~
-openrocketengine generates an output excel workbook with two sheets; one geometric parameters, and one for performance parameters.
-
-
-Recommended Workflow
-~~~~~~~~~~~~~~~~~~~~
-Create a directory for your enigne design files and run rocket from there. I.e.::
-
-    ~/Documents/marginal-stability/engine/design$ rocket tsu-01.cfg
-
+OPTIONAL
+~~~~~~~~
+* :code:`velocity`: Initial Velocity :code:`(default=0)`
+* :code:`thrust_angle`: 0,
+* :code:`bank_angle`: 0,
+* :code:`lift_coefficient`: 0,
+* :code:`heat`: 0,
+* :code:`altitude`: 0,
+* :code:`latitude`: 0,
+* :code:`longitude`: 0,
+* :code:`flight_angle`: 0,
+* :code:`flight_heading`: np.deg2rad(90),
