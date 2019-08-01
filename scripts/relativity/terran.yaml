@@ -1,0 +1,13 @@
+# Vehicle configuartion file for Relativity's Terran
+[VEHICLE]
+stages = 2
+
+[STAGE.2]
+diameter = 1.8m
+fuel = methane
+oxidizer = oxygen
+
+[STAGE.1]
+fuel = methane
+oxidizer = oxygen
+

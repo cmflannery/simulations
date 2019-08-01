@@ -1,3 +1,6 @@
+# ignore compiled docs
+docs/_build
+
 # ignore prototyping files
 *.ipynb
 

@@ -1,1 +1,5 @@
 numpy==1.13.3
+control
+cvx
+configparser
+fluids
