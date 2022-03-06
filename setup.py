@@ -21,8 +21,8 @@ setup(
     name='simulations',
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
-    version='0.0.1',
-    description='An opensource package for rocket simulations',
+    version='0.0.1dev',
+    description='An opensource package for flight vehicle simulations',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/cmflannery/simulations',
